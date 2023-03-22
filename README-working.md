@@ -59,7 +59,6 @@ The key components of the system can be found in our monorepo at commit [3f4b3c3
 
 The following resources will be useful for helping to understand the system.
 
-### OPTIMISM TODO: LINK TO DESCRIPTION OF UPDATES MADE SINCE THE LAST CONTEST
 - [How optimistic rollups and Optimism work](https://community.optimism.io/docs/protocol/2-rollup-protocol/#), including differences between the legacy and bedrock systems.
 - [Plain english specs for Optimism](https://github.com/ethereum-optimism/optimism/blob/f30376825c82f62b846590487fe46b7435213d37/specs/README.md)
 - [Overview of the diff between op-geth and upstream geth](https://op-geth.optimism.io/)
@@ -75,20 +74,58 @@ The following resources will be useful for helping to understand the system.
     - Trail of Bits invariant definition and testing engagement, [September 2022](https://github.com/ethereum-optimism/optimism/blob/develop/technical-documents/security-reviews/2022_11-Invariant_Testing-TrailOfBits.pdf)
     - Trail of Bits review of final Bedrock updates, [November 2022](https://github.com/ethereum-optimism/optimism/blob/develop/technical-documents/security-reviews/2023_01-Bedrock_Updates-TrailOfBits.pdf)
 
-# Known issues
 
-### OPTIMISM TODO: If there are any other known issues to add, please add them. Best thing to do is probably to go through the [last contest's](https://github.com/sherlock-audit/2023-01-optimism-judging/issues) High and Medium findings, and label each one as either "Will Fix" or "Won't Fix." Then we can update this section to say "Any open High/Medium issue in the last contest repo that is labeled "Won't Fix" will not be rewarded in this contest. Any open High/Medium issue labeled "Will Fix" will only be rewarded if the issue still exists (with an explanation of why the issue still exists or why the fix was improper).
+# Known issues
 
 The following issues are known and will not be accepted as valid findings:
 
 1. There is an edge case in which ETH deposited to the `OptimismPortal` by a contract can be irrecoverably stranded:
-    
-    When a deposit transaction fails to execute, the sender's account balance is still credited with the mint value. However, if the deposit's L1 sender is a contract, the `tx.origin` on L2 will be [aliased](https://github.com/ethereum-optimism/optimism/blob/develop/specs/deposits.md#address-aliasing), and this aliased address will receive the minted on L2. In general the contract on L1 will not be able to recover these funds. 
-    
+
+    When a deposit transaction fails to execute, the sender's account balance is still credited with the mint value. However, if the deposit's L1 sender is a contract, the `tx.origin` on L2 will be [aliased](https://github.com/ethereum-optimism/optimism/blob/develop/specs/deposits.md#address-aliasing), and this aliased address will receive the minted on L2. In general the contract on L1 will not be able to recover these funds.
+
     We have documented this risk and encourage users to take advantage of our CrossDomainMessenger contracts which provide additional safety measures.
-    
-2. Some of the ‘legacy’ events in the `L1StandardBridge` and `L2StandardBrige` do not emit when expected.
-3. If the L1CrossDomainMessenger is paused, withdrawals sent to it will fail and not be replayable.
+
+2. [Sherlock #035](https://github.com/sherlock-audit/2023-01-optimism-judging/issues/35) Memory amplification with small but invalid P2P messages
+
+    The fix for this issue is a WIP, and will be addressed prior to mainnet launch.
+
+    - NOTE: AIMING TO COMPLETE BEFORE START OF THE COMP.
+
+3. [Sherlock #209](https://github.com/sherlock-audit/2023-01-optimism-judging/issues/209), #277: Deposit grieffing by filling up the MAX_RESOURCE_LIMIT
+
+    This issue is _mitigated_ by [PR 5064](https://github.com/ethereum-optimism/optimism/pull/5064), which does not completely
+      resolve the issue but does increase the cost of a sustained grieffing attack.
+    A more complete fix will require architectural changes.
+
+## Prior Sherlock findings and fixes
+
+The following is a list of findings from the previous Sherlock Audit, along with their fixes.
+
+- [Sherlock #282](https://github.com/sherlock-audit/2023-01-optimism-judging/issues/282): Client will accept invalid blocks from gossip channels due to insufficient L1BlockInfo decoding
+    - Fixed in [PR 4936](https://github.com/ethereum-optimism/optimism/pull/4936)
+- [Sherlock #087](https://github.com/sherlock-audit/2023-01-optimism-judging/issues/87): Users withdrawals can be permanently locked
+    - Fixed in [PR 4919](https://github.com/ethereum-optimism/optimism/pull/4919)
+- [Sherlock #080](https://github.com/sherlock-audit/2023-01-optimism-judging/issues/80), #096, #158, #297: Withdrawals with high gas limits can be bricked by a malicious user, permanently locking funds
+    - Fixed in [PR 5017](https://github.com/ethereum-optimism/optimism/pull/5017)
+- [Sherlock #109](https://github.com/sherlock-audit/2023-01-optimism-judging/issues/109): Malicious user can finalize other’s withdrawal with less than specified gas limit, leading to loss of funds
+    - Fixed in [PR 5017](https://github.com/ethereum-optimism/optimism/pull/5017)
+- [Sherlock #298](https://github.com/sherlock-audit/2023-01-optimism-judging/issues/298): Incorrect implementation of the _isCorrectTokenPair function
+    - Fixed in [PR 4932](https://github.com/ethereum-optimism/optimism/pull/4932)
+- [Sherlock #279](https://github.com/sherlock-audit/2023-01-optimism-judging/issues/279): Frame parsing accepts fully missing fields
+    - Fixed in [PR 4867](https://github.com/ethereum-optimism/optimism/pull/4867)
+- [Sherlock #026](https://github.com/sherlock-audit/2023-01-optimism-judging/issues/26), #055, #057: Funds are frozen if send from L1 -> L2 while the L2XDM is paused
+    - Fixed in [PR 4913](https://github.com/ethereum-optimism/optimism/pull/4913)
+- [Sherlock #011](https://github.com/sherlock-audit/2023-01-optimism-judging/issues/11), #105, #113, #189, #218, #223, #232: Message passer DoS in migration
+    - Fixed in [PR 4861](https://github.com/ethereum-optimism/optimism/pull/4861)
+- [Sherlock #235](https://github.com/sherlock-audit/2023-01-optimism-judging/issues/235): Function MigrateWithdrawal() may set gas limit too high for old withdrawals
+    - Fixed in [PR 4911](https://github.com/ethereum-optimism/optimism/pull/4911)
+- [Sherlock #177](https://github.com/sherlock-audit/2023-01-optimism-judging/issues/177): Crafted p2p spam can render nodes permanently unable to process L2 blocks
+    - Fixed in [PR 4873](https://github.com/ethereum-optimism/optimism/pull/4873)
+- [Sherlock #051](https://github.com/sherlock-audit/2023-01-optimism-judging/issues/51): Cannot bridge native L2 tokens using withdraw/withdrawTo functions
+    - Fixed in [PR 4909](https://github.com/ethereum-optimism/optimism/pull/4909)
+- [Sherlock #053](https://github.com/sherlock-audit/2023-01-optimism-judging/issues/53) and #058: Withdrawal transactions can get stuck if output root is reproposed
+    - Fixed in [PR 4866](https://github.com/ethereum-optimism/optimism/pull/4866)
+
 
 # What to look for
 
