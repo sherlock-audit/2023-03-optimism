@@ -16,16 +16,15 @@ and ending 30 days after the start date of the contest, using a well-known excha
 # Judging changes from the previous Optimism contest
 
 - Issue de-duplication and initial judging will be handled by a Lead Judge (TBD) approved by Sherlock and Optimism.
-- Final decisions on judging will be made by Sherlock (in consultation with the Lead Judge and Optimism). 
-- Judging criteria for High and Medium issues will attempt to mirror the judging criteria of the last Optimism contest. In the event of gaps in the previous judging criteria, the [Sherlock judging rules](https://docs.sherlock.xyz/audits/watsons/judging) will be consulted. 
+- Final decisions on judging will be made by Sherlock (in consultation with the Lead Judge and Optimism).
+- Judging criteria for High and Medium issues will attempt to mirror the judging criteria of the last Optimism contest. In the event of gaps in the previous judging criteria, the [Sherlock judging rules](https://docs.sherlock.xyz/audits/watsons/judging) will be consulted.
 - Low severity issues are not accepted
-- Similar to the first contest, this contest will not count towards Leaderboard rankings for any Watsons (due to non-Solidity code, etc.). 
+- Similar to the first contest, this contest will not count towards Leaderboard rankings for any Watsons (due to non-Solidity code, etc.).
 
 # On-chain context
 
-### OPTIMISM TODO: Verify that this is roughly the way Watsons can think about issues related to these specific topics
 ```
-DEPLOYMENT: mainnet
+DEPLOYMENT: Ethereum and Optimism Mainnet
 ERC20: All tokens with regular behavior
 ERC721: All tokens with regular behaviour
 ERC777: none
@@ -35,20 +34,14 @@ REBASING TOKENS: none
 
 # System context
 
-### OPTIMISM TODO: Update for new Goerli deployment, etc. if relevant
+The previous competition looked at contracts deployed on the [Goerli network](https://community.optimism.io/docs/developers/bedrock/public-testnets/#goerli).
 
-For this competition, you’ll be looking at Optimism on the [Goerli network.](https://community.optimism.io/docs/developers/bedrock/public-testnets/#goerli) This system was [recently upgraded](https://community.optimism.io/docs/developers/bedrock/public-testnets/#goerli) from our legacy system to the new [Bedrock architecture](https://community.optimism.io/docs/developers/bedrock/how-is-bedrock-different/). 
-
-Unlike a typical Sherlock competition, rather than looking for bugs in source code, you’ll be able to interact with a live system, complete with block explorers and other infrastructure.
-
-It also opens the door to issues that might result from errors made during the deployment and upgrade process.
-
-Our system is composed of of both Golang and Solidity. Given the size of the code base, we’ll do our best to guide you towards the kinds of bugs we anticipate you might find, and where to look for them.
+As we have not yet upgraded the contracts on Goerli, this compettion will focus on the source code listen in the Scope section below.
 
 # Scope
 
-### OPTIMISM TODO: Update scope for latest commit hash. 
-The key components of the system can be found in our monorepo at commit [3f4b3c3281](https://github.com/ethereum-optimism/optimism/tree/3f4b3c328153a8aa03611158b6984d624b17c1d9). 
+### OPTIMISM TODO: Update scope for latest commit hash.
+The key components of the system can be found in our monorepo at commit [3f4b3c3281](https://github.com/ethereum-optimism/optimism/tree/3f4b3c328153a8aa03611158b6984d624b17c1d9).
 
 - [L1 Contracts](https://github.com/ethereum-optimism/optimism/tree/3f4b3c328153a8aa03611158b6984d624b17c1d9/packages/contracts-bedrock/contracts/L1)
 - [L2 Contracts (AKA Predeploys)](https://github.com/ethereum-optimism/optimism/tree/3f4b3c328153a8aa03611158b6984d624b17c1d9/packages/contracts-bedrock/contracts/L2)
@@ -97,13 +90,20 @@ The following issues are known and will not be accepted as valid findings:
       resolve the issue but does increase the cost of a sustained grieffing attack.
     A more complete fix will require architectural changes.
 
+4. There are various 'foot guns' in the bridge which may arise from misconfiguring a token. Examples include:
+    - Having both (or neither of) the local and remote tokens be OptimismMintable.
+    - Tokens which dynamically alter the amount of a token held by an account, such as fee-on-transfer and rebasing tokens.
+    To minimize complexity our bridge design does not try to prevent all forms of developer and user error.
+
+5. When running in non-archive mode `op-geth` has difficulty executing deep reorgs. We are working on a fix.
+
 ## Prior Sherlock findings and fixes
 
-The following is a list of findings from the previous Sherlock Audit, along with their fixes.
+The following is a list of findings from the previous Sherlock Audit, along with their fixes:
 
 - [Sherlock #282](https://github.com/sherlock-audit/2023-01-optimism-judging/issues/282): Client will accept invalid blocks from gossip channels due to insufficient L1BlockInfo decoding
     - Fixed in [PR 4936](https://github.com/ethereum-optimism/optimism/pull/4936)
-- [Sherlock #087](https://github.com/sherlock-audit/2023-01-optimism-judging/issues/87): Users withdrawals can be permanently locked
+- [Sherlock #087](https://github.com/sherlock-audit/2023-01-optimism-judging/issues/87): Users withdrawals can be permanently locked (via the reentrancy guard)
     - Fixed in [PR 4919](https://github.com/ethereum-optimism/optimism/pull/4919)
 - [Sherlock #080](https://github.com/sherlock-audit/2023-01-optimism-judging/issues/80), #096, #158, #297: Withdrawals with high gas limits can be bricked by a malicious user, permanently locking funds
     - Fixed in [PR 5017](https://github.com/ethereum-optimism/optimism/pull/5017)
@@ -129,9 +129,7 @@ The following is a list of findings from the previous Sherlock Audit, along with
 
 # What to look for
 
-### OPTIMISM TODO: Update the sections below (or add sections) for any new attack types, etc. if relevant
-
-In order to guide you, we've attempted to outline as clearly as possible the the types of attacks we'd like you to pursue. Issues which do not match those described below will be considered, but are not guaranteed to be accepted. 
+In order to guide you, we've attempted to outline as clearly as possible the the types of attacks we'd like you to pursue. Issues which do not match those described below will be considered, but are not guaranteed to be accepted.
 
 The remainder of this document is subdivided into sections based on the type of attack and then outlines the different severity attacks with
 
@@ -147,7 +145,7 @@ The critical client node components are the op-node and op-geth services, which 
 ## Medium
 
 - Consensus failures
-    - **Explanation:** There is one sequencer (running the op-node and batcher services) submitting transaction batches to L1, but many verifier op-nodes will read these batches and check the results of its execution. The sequencer and verifiers must remain in consensus, even in the event of an L1 reorg. 
+    - **Explanation:** There is one sequencer (running the op-node and batcher services) submitting transaction batches to L1, but many verifier op-nodes will read these batches and check the results of its execution. The sequencer and verifiers must remain in consensus, even in the event of an L1 reorg.
     In addition, verifiers may operate in two different modes meaning that they either read “unsafe” blocks from the Sequencer, or only derive the L2 state from L1. Verifiers in either of these modes should all eventually agree about the finalized head.
     Similarly, a verifier which is syncing the chain from scratch should agree with a verifier which has been running and is likely to have handled L1 reorgs.
 - DoS attacks on critical services
@@ -165,7 +163,7 @@ Findings that break contracts in a way that could cause people to lose funds and
 
 ## Medium
 
-Findings that break contracts but are difficult to trigger and only impact a very contrived or unusual contract, suggesting that a developer would have to go significantly out of their way to trigger the issue. 
+Findings that break contracts but are difficult to trigger and only impact a very contrived or unusual contract, suggesting that a developer would have to go significantly out of their way to trigger the issue.
 
 # Bridge vulnerabilities
 
@@ -179,6 +177,16 @@ Naturally the security of our bridging contracts is critical as it holds all ass
     - **Explanation:** We have a Solidity implementation of the Merkle Patricia Tree. Can you trick it into verifying the existence of a withdrawal which does not exist? This type of attack would be similar to that of the [Binance Bridge attack](https://www.zellic.io/blog/binance-bridge-hack-in-laymans-terms).
 - Bypass the two step withdrawal proof logic
     - **Explanation:** In order to mitigate against possible bugs in our withdrawal proof, we’ve introduced a two step withdrawal process which requires users to prove their withdrawal at the beginning of the 7 day waiting period.
+- Permissionlessly prevent another user from depositing or withdrawing.
+    - **Explanation:** Several findings in the previous Sherlock audit (see findings [80](https://github.com/sherlock-audit/2023-01-optimism-judging/issues/80), [87](https://github.com/sherlock-audit/2023-01-optimism-judging/issues/87), and [109](https://github.com/sherlock-audit/2023-01-optimism-judging/issues/109)) identified attacks which would allow an arbitrary user to lock up another user's withdrawal (including the associated data and assets). This would have required an upgrade to intervene and release the withdrawals. We're interested in similar attacks on the deposit path as well.
+
+## Medium
+
+- A system user preventing a user from depositing or withdrawing
+    - **Explanation:** Two findings in the previous Sherlock audit (see findings [26](https://github.com/sherlock-audit/2023-01-optimism-judging/issues/26) and [53](https://github.com/sherlock-audit/2023-01-optimism-judging/issues/53)) identified attacks which would allow a system user (ie. the Proposer or Messenger Owner) to lock up a user's withdrawal (including the associated data and assets). This would have required an upgrade to release the withdrawals. We're interested in similar attacks on the deposit path as well.
+- Temporarily preventing a user from depositing or withdrawing.
+    - **Explanation:** A findings in the previous Sherlock audit (see finding [209](https://github.com/sherlock-audit/2023-01-optimism-judging/issues/209)) identified an attack which would allow an arbitrary user to temporarily prevent another user from depositing (including the associated data and assets) using a grieffing attack. This attack would be costly sustain, but also a significant headache for depositors.
+        We're interested in similar attacks on the withdrawal path as well.
 
 # Generic smart contract issues
 
@@ -194,9 +202,9 @@ Some of the most common smart contract vulnerabilities also apply to our system 
 
 - Attacks, including DoS and griefing, leading to temporary freezing of funds in the bridge.
 
-# Migration attacks
+# Migration attacks or bugs
 
-During the migration from the legacy system to Bedrock, the Optimism network is temporarily halted, and undergoes a process of ‘state surgery’, which directly modifies the bytecode and storage of certain contracts. 
+During the migration from the legacy system to Bedrock, the Optimism network is temporarily halted, and undergoes a process of ‘state surgery’, which directly modifies the bytecode and storage of certain contracts.
 
 Migration attacks would involve putting the legacy system into a pre-migration state such that our migration scripts will result in any of the following:
 
@@ -208,3 +216,4 @@ Migration attacks would involve putting the legacy system into a pre-migration s
 
 - Contract state which does not match the legacy system (aside from that which is clearly intended to be modified)
     - If this results in loss of funds or another high severity issue, it will be considered as such.
+- Attacks which enable an arbitrary user to halt the migration process (as in finding [11](https://github.com/sherlock-audit/2023-01-optimism-judging/issues/11)).
