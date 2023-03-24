@@ -40,13 +40,12 @@ As we have not yet upgraded the contracts on Goerli, this compettion will focus 
 
 # Scope
 
-### OPTIMISM TODO: Update scope for latest commit hash.
-The key components of the system can be found in our monorepo at commit [3f4b3c3281](https://github.com/ethereum-optimism/optimism/tree/3f4b3c328153a8aa03611158b6984d624b17c1d9).
+The key components of the system can be found in our monorepo at commit [9b9f78c661](https://github.com/ethereum-optimism/optimism/commit/9b9f78c6613c6ee53b93ca43c71bb74479f4b975), as well as in the op-geth repo at commit [7eee103098](https://github.com/ethereum-optimism/op-geth/commit/7eee10309896bb2a3cfd65a8c7c9d14480d74158)
 
-- [L1 Contracts](https://github.com/ethereum-optimism/optimism/tree/3f4b3c328153a8aa03611158b6984d624b17c1d9/packages/contracts-bedrock/contracts/L1)
-- [L2 Contracts (AKA Predeploys)](https://github.com/ethereum-optimism/optimism/tree/3f4b3c328153a8aa03611158b6984d624b17c1d9/packages/contracts-bedrock/contracts/L2)
-- [op-node](https://github.com/ethereum-optimism/optimism/tree/3f4b3c328153a8aa03611158b6984d624b17c1d9/op-node)
-- [op-geth](https://github.com/ethereum-optimism/op-geth) (in its own repo)
+- [L1 Contracts](https://github.com/ethereum-optimism/optimism/tree/9b9f78c6613c6ee53b93ca43c71bb74479f4b975/packages/contracts-bedrock/contracts/L1)
+- [L2 Contracts (AKA Predeploys)](https://github.com/ethereum-optimism/optimism/tree/9b9f78c6613c6ee53b93ca43c71bb74479f4b975/packages/contracts-bedrock/contracts/L2)
+- [op-node](https://github.com/ethereum-optimism/optimism/tree/9b9f78c6613c6ee53b93ca43c71bb74479f4b975/op-node)
+- [op-geth](https://github.com/ethereum-optimism/op-geth/commit/https://github.com/ethereum-optimism/op-geth/commit/7eee10309896bb2a3cfd65a8c7c9d14480d7415896bb2a3cfd65a8c7c9d14480d74158) (in its own repo)
 
 # Resources
 
@@ -67,6 +66,20 @@ The following resources will be useful for helping to understand the system.
     - Trail of Bits invariant definition and testing engagement, [September 2022](https://github.com/ethereum-optimism/optimism/blob/develop/technical-documents/security-reviews/2022_11-Invariant_Testing-TrailOfBits.pdf)
     - Trail of Bits review of final Bedrock updates, [November 2022](https://github.com/ethereum-optimism/optimism/blob/develop/technical-documents/security-reviews/2023_01-Bedrock_Updates-TrailOfBits.pdf)
 
+# Roles
+
+The following table outlines all the roles and their permissions in the system
+
+| Role | Capability |
+| --- | --- |
+| L2 ProxyAdmin Owner | Can instantly upgrade all L2 contracts. |
+| L1 ProxyAdmin Owner | Can instantly upgrade all L1 contracts. |
+| Challenger | Can call `deleteL2Outputs()` in the event of fault. |
+| MSD Controller | Controls the Migration SystemDictator contract. |
+| System Config Owner | Can modify system config values. |
+| Proposer | Can propose new L2 Outputs. |
+| Sequencer | Can submit new transaction batches. |
+| Guardian | Can pause and unpause the Portal. |
 
 # Known issues
 
@@ -141,6 +154,7 @@ The critical client node components are the op-node and op-geth services, which 
 
 - Bypass the deposit fee logic, causing the sequencer to improperly mint ETH on Optimism
     - **Explanation:** The op-node service reads events which are emitted by the Optimism Portal contract on L1, and parses those events in order to create deposit transactions which can mint ETH on L2. This attack would require fooling this logic into minting ETH, without actually having to deposit ETH into the Optimism Portal contract.
+- The Sequencer/Batcher should not be able to trick verifiers into accepting invalid blocks into their safe chain.
 
 ## Medium
 
