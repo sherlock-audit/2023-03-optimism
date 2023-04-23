@@ -38,7 +38,7 @@ The previous competition looked at contracts deployed on the [Goerli network](ht
 
 As we have not yet upgraded the contracts on Goerli, this compettion will focus on the source code listen in the Scope section below.
 
-# Scope
+# Audit scope
 
 The key components of the system can be found in our monorepo at commit [9b9f78c661](https://github.com/ethereum-optimism/optimism/commit/9b9f78c6613c6ee53b93ca43c71bb74479f4b975), as well as in the op-geth repo at commit [7eee103098](https://github.com/ethereum-optimism/op-geth/commit/7eee10309896bb2a3cfd65a8c7c9d14480d74158)
 
